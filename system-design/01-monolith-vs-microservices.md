@@ -68,11 +68,19 @@
 
 *Frontend analogy:* bundling a state update + a queued "event to emit" into one reducer action, instead of firing them as two separate, racy calls.
 
-## Likely Interview Questions
-- When would you *not* migrate a monolith to microservices?
-- How do you decide which module to extract first?
-- How does the Strangler Fig pattern reduce migration risk vs. a full cutover?
-- What are the trade-offs of eventual consistency introduced by Saga/Outbox?
+## Likely Interview Questions & Answers
+
+**Q: When would you *not* migrate a monolith to microservices?**
+When the team is small (roughly under 8-10 engineers), traffic is low/predictable, or the domain boundaries aren't well understood yet. Microservices add real operational cost — network calls, distributed debugging, more infra to run — that only pays off once a monolith's specific pain points (deploy contention, scaling one hot module, team-ownership conflicts) actually show up. Migrating too early is a common anti-pattern interviewers like to see you call out.
+
+**Q: How do you decide which module to extract first?**
+Look for the module that is simultaneously high-traffic/high-scaling-need AND relatively self-contained (few tight dependencies on other modules' data). Extracting a heavily-coupled module first maximizes migration pain for minimal benefit. A good signal: pick the module causing the most deploy bottlenecks or on-call pain today.
+
+**Q: How does the Strangler Fig pattern reduce migration risk vs. a full cutover?**
+A full cutover is all-or-nothing — if the new service has a bug, 100% of users are affected immediately with no fallback. Strangler Fig routes a small, controlled percentage of traffic first, so failures are caught while blast radius is small, and rollback is instant (just route traffic back to 0%) since the old monolith module is still running and untouched during the transition.
+
+**Q: What are the trade-offs of eventual consistency introduced by Saga/Outbox?**
+You gain availability, resilience, and independent scaling — but you give up the guarantee that all services see the same data at the exact same instant. There's a window where, e.g., an order shows "created" before payment has synced — so the UI/business logic has to be designed to tolerate brief staleness (e.g. showing "processing" states) rather than assuming instant cross-service consistency.
 
 ---
-*Source: BE System Design playlist, Video 1 (Monolith vs Microservices)*
+*Source: Ultimate System Design playlist, Video 1 (Monolith vs Microservices) — https://youtu.be/-r81RFGhVfw*
